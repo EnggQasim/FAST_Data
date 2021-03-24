@@ -1,0 +1,5 @@
+\beamer@sectionintoc {1}{Introduction}{3}{0}{1}
+\beamer@sectionintoc {2}{Example Tables}{4}{0}{2}
+\beamer@subsectionintoc {2}{1}{A table with border}{4}{0}{2}
+\beamer@subsectionintoc {2}{2}{A table without border}{5}{0}{2}
+\beamer@sectionintoc {3}{Example Graphics}{6}{0}{3}
