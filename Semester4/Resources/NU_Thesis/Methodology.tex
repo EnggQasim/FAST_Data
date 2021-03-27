@@ -1,0 +1,64 @@
+%%--------------------Chapter 3------------------------
+\chapter{Methodology}
+\section{A Section}
+%%--------------------example citation-----------------
+Start writing from here~\cite{ConcreteMath}.
+
+\subsection{A Subsection}
+some text with footnote\footnote{A first}. more
+text\footnote{second} and more.
+
+%%-----------------text superscript, subscript--------------------
+A sentence with superscript.\textsuperscript{superscript}. A
+sentence with subscript.$_{\mbox{\footnotesize{subscript}}}$
+
+%%-----------------printing verbatim--------------------------------
+\subsection{Printing Verbatim}
+\begin{verbatim}
+THIS TEXT WILL BE DIRECTLY PRINTED AS IF TYPED ON A TYPEWRITER, WITH
+ALL LINE BREAKS AND SPACES,              without any LaTex command
+being executed.
+
+public class BasicsDemo{
+    public static void main(String[] args){
+        int sum = 0;
+        for (int current = 1; current <= 10; current++){
+            sum += current;
+        }
+        System.out.println("Sum = " + sum);
+    }
+}
+\end{verbatim}
+
+\begin{Verbatim}[frame=single, xrightmargin=2pc]
+public class BasicsDemo{
+    public static void main(String[] args){
+        int sum = 0;
+        for (int current = 1; current <= 10; current++){
+            sum += current;
+        }
+        System.out.println("Sum = " + sum);
+    }
+}
+\end{Verbatim}
+
+%%---------------program code-------------------------------------
+\section{A Section}
+\subsection{Pretty-printing Program Code}
+%\begin{algorithmic}
+%\IF {$i\leq0$} \STATE $i\gets1$ \ELSE \IF {$i\geq0$} \STATE
+%$i\gets0$ \ENDIF \ENDIF
+%\end{algorithmic}
+\subsubsection{Example Java Code}
+The following is an code example:
+\begin{lstlisting}[language=Java]
+public class BasicsDemo{
+    public static void main(String[] args){
+        int sum = 0;
+        for (int current = 1; current <= 10; current++){
+            sum += current;
+        }
+        System.out.println("Sum = " + sum);
+    }
+}
+\end{lstlisting}

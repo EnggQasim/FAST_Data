@@ -1,0 +1,1 @@
+makeindex NU_Thesis.nlo -s nomencl.ist -o NU_Thesis.nls

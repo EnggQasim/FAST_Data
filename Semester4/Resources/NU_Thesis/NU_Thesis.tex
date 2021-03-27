@@ -1,0 +1,63 @@
+\documentclass[12pt, a4paper,twoside,openright]{nufastthesis}
+\date{2020} % Year of Thesis Defense
+\title{Title} % Title of Thesis
+\author{Name} % Candidate Name
+\rollno{20K-1234}
+\degree{Degree Name} % Doctor of Philosophy or Master of Science or Bachelor of Science
+\shortdeg{PhD} % PhD or MS or BS
+\printingdate{September 30, 2020} % Thesis Printing Date
+\gau{Department of ABC} % Department of Electrical Engineering or Department of Computer Science
+\supervisor{Dr. JKL}
+\internalexam{Dr. MNO}
+\externalexamone{Dr. PQR}
+\externalexamoneaffiliation{University of UVW, XYZ}
+\externalexamtwo{Dr. DEF}
+\externalexamtwoaffiliation{University of GHI, STU}
+\city{Karachi} % Peshawar, Islamabad, Lahore, Chiniot-Faisalabad, Karachi
+
+\input{preamble}
+
+\begin{document}
+\pdfbookmark[0]{Title Page}{chap:titlepage} % to add pdf bookmark
+\nufasttitlepage
+\setcounter{secnumdepth}{3} \setcounter{tocdepth}{2}
+\pagestyle{empty}
+\pagenumbering{roman}
+\include{Plagiarism_Undertaking}
+\include{Author_Declaration}
+\cleardoublepage
+\include{Certificate_of_Approval}
+\cleardoublepage
+\include{Dedication}
+\include{Abstract}
+\include{Acknowledgments}
+\cleardoublepage
+\pagestyle{plain}
+%%-----------Table of Contents------------------
+\tableofcontents
+%%------------List of Tables----------------------
+\listoftables
+%%------------List of Figures----------------------
+\listoffigures
+\printnomenclature[1.25in]
+\cleardoublepage
+%to make cite border of correct height
+\makeatletter\let\org@hyper@linkend\hyper@linkend\def\hyper@linkend{\baselineskip=0.5\baselineskip\org@hyper@linkend}\makeatother
+\pagenumbering{arabic}
+\fancyhf{}
+\fancyfoot[C]{\thepage}
+\pagestyle{fancy}
+\include{Introduction}
+\include{Literature_Review}
+\include{Methodology}
+\include{Conclusions}
+\include{Recommendations_for_Future_Work}
+\bibliographystyle{IEEEtran}
+\include{Bibliography}
+\begin{appendices}
+\include{AppendixA}
+\include{AppendixB}
+\end{appendices}
+\cleardoublepage
+\printindex
+\end{document}
