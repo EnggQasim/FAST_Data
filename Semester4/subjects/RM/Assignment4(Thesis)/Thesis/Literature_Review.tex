@@ -1,0 +1,125 @@
+%%----------Chapter 2------------------------------------------
+\chapter{Literature Review}
+\section{Example Citation}
+%%---------------example citation---------------------
+Start writing from here. Here is a citation~\cite{Knuth92}.
+\section{Example Tables}
+\subsection{A Table With Border}
+Exam results are given in Table~\ref{tab:Results}.
+%%------------------example table--------------------
+\begin{table}[htbp]
+\caption{Example table}
+\label{tab:Results}
+\begin{center}
+\begin{tabular}{| l || r | r | r | c |}
+\hline
+Name&Exam1&Exam2&Exam3&Grade\\
+\hline\hline
+Ahmed&19& 28&33&C \\
+\hline
+Daud&49& 35&60&B  \\
+\hline
+Zain&76& 38&59&A  \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{A Table Without Border}
+Table~\ref{tab:MathSymbols} is an example table without borders.  Some symbols with label can be refereed later on.
+\begin{table}[htbp]
+\caption{Variable-sized  Symbols}
+\label{tab:MathSymbols}
+\begin{center}
+\begin{tabular}{l l l l l l}
+$\sum$  \label{p1}&$\backslash$sum   &$\bigcap$ \label{p2}&$\backslash$bigcap      &$\bigodot$   &$\backslash$bigodot  \\
+$\prod$ &$\backslash$prod  &$\bigcup$   &$\backslash$bigcup    &$\bigotimes$ &$\backslash$bigotimes\\
+$\coprod$ &$\backslash$coprod &$\bigsqcup$ &$\backslash$bigsqcup  &$\bigoplus$ &$\backslash$bigoplus \\
+$\int$     &$\backslash$int   &$\bigvee$   &$\backslash$bigvee    &$\biguplus$ &$\backslash$biguplus\\
+$\oint$     &$\backslash$oint &$\bigwedge$ &$\backslash$bigwedge
+\end{tabular}
+\end{center}
+\end{table}
+
+\section{Example List}
+\subsection{Example Dotted List}
+%%-----------------example dotted list--------------------
+\smallskip
+\textbf{Some special characters in TeX:}
+\begin{itemize}
+\item Accents
+\item Braces
+\item Dollar signs
+\end{itemize}
+
+\subsection{Example Numbered List}
+%%----------------example numbered list---------------------
+\smallskip
+\textbf{Some special characters in TeX:}
+\begin{enumerate}
+\item Accents
+\item Braces
+\item Dollar signs
+\end{enumerate}
+
+\section{Math Example}
+\subsection{Inline Math Mode}
+%%-------------------example math equation----------
+Mathematical material to be typeset inline must be surrounded by a
+single dollar sign. For example: $a^2 + b^2 = c^2$.
+\subsection{Displayed Math}
+This is a displayed math example without numbering.
+\[
+\lim_{x \to a}f(x)
+\]
+
+\[
+\left|\sum_{i=1}^n a_ib_i\right| \le \left(\sum_{i=1}^n
+a_i^2\right)^{1/2} \left(\sum_{i=1}^n b_i^2\right)^{1/2}
+\]
+
+This is a math equation with numbering.
+\begin{equation}
+(a+b)^3 = (a+b)^2(a+b)
+\end{equation}
+
+%%-----------------example aligned equation------------------
+This is multiline equation example.
+\begin{align}
+(a+b)^3 &= (a+b)^2(a+b)\\
+&=(a^2+2ab+b^2)(a+b)\\
+&=(a^3+2a^2b+ab^2) + (a^2b+2ab^2+b^3)\\
+&=a^3+3a^2b+3ab^2+b^3
+\end{align}
+
+%%--------------example matrix-------------------------------
+This is a matrix
+\[
+\begin{matrix}
+    a+b & uv & x-y & 5\\
+    a+b+c & u+v &x+y & 10
+\end{matrix}
+\]
+
+%%------------example cases----------------------------------
+This is a case
+\[
+f(x)=
+\begin{cases}
+    -x^{2}, &\text{if $x<0$;}\\
+    \alpha+x, &\text{if $0 \leq x \leq 1$;}\\
+    x^{2}, &\text{otherwise.}
+\end{cases}
+\]
+
+%%--------------------example figure-------------------
+\section{Graphics Example}
+\subsection{Stars}
+The ideal graphics format for inclusion in a \LaTeX document is
+"encapsulated postscript" or eps. Here is an example figure.
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{Stars}
+\caption{Stars}
+\end{center}
+\end{figure}
