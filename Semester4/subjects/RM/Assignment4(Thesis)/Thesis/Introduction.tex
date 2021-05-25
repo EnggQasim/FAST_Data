@@ -1,10 +1,49 @@
 %%-----------Chapters start-------------------------------------
 %%-----------Chapter 1------------------------------------------
 \chapter{Introduction}
+
+
+Session-based recommendation is a very common recommendation problem that is encountered in many domains such as e-commerce, classiﬁed sites, music and video recommendation. In the session-based setting, past user history logs are typically not available (either because the user is new or not logged-in or not tracked) and recommend-er systems have to rely only on the actions of the user in the current sessions to provide accurate recommendations. Until recently many of these recommendations tasks were tackled mainly using relatively simple methods such as item-based collaborative ﬁltering \cite{sarwar2001item} or content-based methods. Recurrent Neural Networks (RNNs)\nomenclature{RNN}{Recurrent Neural Network} have emerged from the deep learning literature as powerful methods for modeling sequential data. These models have been successfully applied in speech recognition, translation, time series fore casting and signal processing. In recommend er systems RNNs have been recently applied to the session-based recommendation setting with impressive results \cite{hidasi2012fast}. 
+
 \label{chap:introduction}
-\section{A Section}
+\section{Traditional History}
+The advantage of RNNs over traditional similarity-based methods for recommendation is that they can effectively model the whole session of user interactions (clicks, views, etc.). By modeling the whole session RNNs can in effect learn the ‘theme’ of the session and thus provide recommendations with increased accuracy (between 20\%-30\%) over traditional methods.
+
+RNNs in session-based recommendation have been adapted to the task of recommendation. One of the main objectives in recommendation is to rank items by user preference; i.e. the exact ranking or scoring of items in the tail of the item list (items that the user will not like) is not that important, but it is very important to rank correctly the items that the user will like at the top of the list (ﬁrst 5, 10 or 20 positions). To achieve this with machine learning one has to typically utilize learning to rank techniques(see e.g. \cite{burges2010ranknet}) and in particular ranking objectives and loss functions. The current session-based RNN approaches use ranking loss functions and, in particular, pairwise ranking loss functions. As in most deep learning approaches the choice of a good ranking loss can have a very signiﬁcant inﬂuence on performance. Since deep learning methods need to propagate gradients over several layers and in the case of RNNs’back in time’over previous steps,to optimize the model parameters, the quality of these gradients originating from the loss function inﬂuences the quality of the optimization and the model parameters. Moreover the nature of the recommendation task, which typically entails large output spaces (due to large number of items), poses unique challenges that have to be taken in to account as well when designing a proper ranking loss function. We will see that the way this large output space issue is tackled is very crucial in achieving good performance.
+
+
+
+
+
+
+
 \label{sec:abc}
-\subsection{A Subsection}
-I am a student of NU\nomenclature{NU}{National University}.  It is also known as FAST\index{FAST}. \nomenclature{PK}{Pakistan}
+\subsection{How Impact our loss function}
+
+In this work we analyze ranking loss functions used in RNNs for session-based recommendations, this analysis leads to a new set of ranking loss functions that increase the performance of the RNN upto 30\% over previous commonly used losses without incurring in signiﬁcant computational overheads. We essentially devise a new class of loss functions that combines learnings from the deep learning and the learning to rank literature. Experimental results on several datasets coming from industry validate these impressive improvements,in terms of Mean Reciprocal Rank(MRR)\nomenclature{MRP}{Mean Reciprocal} and Recall@20. With these improvements the difference between RNNs and conventional memory-based collaborative ﬁltering jumps to 51\% in terms of MRR and Recall@20 demonstrating the potential that deep learning methods bring to the area of Recommender Systems. NU.  It is also known as FAST\index{FAST}. \nomenclature{PK}{Pakistan}
 \index{PK}
+
+\subsection{RELATED WORK}
+One of the main approaches that is employed in session-based recommendation and a natural solution to the problem of a missing user proﬁle is the item-to-item recommendation approach \cite{sarwar2001item}. In this setting, an item-to-item similarity matrix is precomputed from the available session data, that is items that are often clicked together in sessions are deemed to be similar. This similarity matrix is then simply used during the session to recommend the most similar items to the one the user has currently clicked. 
+
+Long Short-Term Memory(LSTM) \cite{hochreiter1997long} networks area type of RNNs that have been shown to solve the optimization issues the plague vanilla-type RNNs. LSTM’s include additional gates that regulate when and how much of the input to take into account and when to reset the hidden state. As lightly simpliﬁed version of LSTM–that still maintains all their properties – are Gated Recurrent Units (GRUs) \cite{cho2014bv}, which we use in this work. Recurrent Neural Networks have been used with success in the area of session-based recommendations; \cite{hidasi2016a} proposed a Recurrent Neural Network with a pairwise ranking loss for this task, \cite{tan2016improved} proposed data augmentation techniques to improve the performance of the RNN for session-based recommendations; these techniques have though the side effect of increasing training times as a single session is split into several sub-sessions for training. Session-based RNNs have been augmented \cite{hidasi2016parallel} b with feature information, such as text and images from the clicked/consumed items, showing improved performance over the plain models. RNNs have also been used in more standard user-item collaborative ﬁltering settings where the aim is to model the evolution of the user and items factors \cite{wu2017recurrent},\cite{devooght2016collaborative} where the results are less striking, with the proposed methods barely outperforming standard matrix factorization methods. This is to be expected as there is no strong evidence on major user taste evolution in a single domain in the time frames of the available datasets and sequential modeling of items that are not ’consumed’ in sessions such as movies might not bring major beneﬁts. 
+
+Another area touched upon in this work are loss functions tailored to recommender systems requirements. This typically means ranking loss functions. In this area there has been work particularly in
+the context of matrix factorization techniques. One of the first learning to rank techniques for collaborative filtering was introduced in \cite{weimer2007cofirank}. Essentially a listwise loss function was
+introduced along with an alternating bundle method for optimization of the factors. Further ranking
+loss function for collaborative filtering were introduced in \cite{shi2012climf} \cite{rendle2012bpr}
+and \cite{rendle2012bpr}. Note that the fact that these loss functions work well in matrix factorization does not guarantee in any way that they are an optimal choice for RNNs as back propagation
+requirements are stronger than those posed by simple SGD. We will in fact see that BPR, a popular
+choice of loss function, needs to be significantly modified to extract optimal results in the case of
+RNNs for session-based recommendations. Another work related to sampling large output spaces
+in deep networks for efficient loss computations for language models is the ’blackout’ method \cite{ji2015blackout}, where essentially a sampling procedure similar to the one used in \cite{hidasi2015session}
+is applied in order to efficiently compute the categorical cross-entropy loss.
+
+
+%% Please note that we have introduced automatic line number generation
+%% into the style file for \LaTeXe. This is to help reviewers
+%% refer to specific lines of the paper when they make their comments. Please do
+%% NOT refer to these line numbers in your paper as they will be removed from the
+%% style file for the final version of accepted papers.
+
 

@@ -1,6 +1,195 @@
 %%-----------------Chapter 4---------------------------
-\chapter{Conclusions}
-\section{A Section}
-Start writing from here.
-\subsection{A Subsection}
-This is a paragraph.
+\chapter{LOSS FUNCTION DESIGN}
+
+\label{sec:loss}
+In this section we examine the loss functions implemented in GRU4Rec and identify their weaknesses. We propose two ways to stabilize the numerical instability of the cross-entropy loss, we show how learning with the TOP1 and BPR pairwise losses degrades as we add more samples to the
+output, and propose a family of loss functions based on pairwise losses that alleviates this problem.
+We note that, while our aim is to improve GRU4Rec, the loss functions proposed in this section can
+be also used with other models, such as matrix factorization.
+
+\subsection{ CATEGORICAL CROSS-ENTROPY}
+Categorical cross-entropy measures the distance of a proposed (discrete) probability distribution q
+from the target distribution p as defined by (\ref{eq:1}).
+
+\begin{equation}\label{eq:1}
+   H(p,q)=-\sum_{j=1}^{N} p_j  \log\ q_j
+\end{equation}
+
+This loss is often used in machine learning and deep learning in particular for multi-class classification problems. Next item recommendation can be interpreted as classification, where the class labels are the items in the system and item sequences need to be assigned with the label of the item that follows. In a single-label scenario – such as next item recommendation – the target distribution is a one-hot vector over the set of items, with the coordinate corresponding to the target item set
+to 1. The proposed distribution consists of the scores assigned to the items by the algorithm. The output scores need to be transformed to form a distribution. It is common practice to use the soft max transformation (\ref{eq:2}), which is a continuous approximation of the max operation. This naturally aligns
+with the sentiment that the label with the highest score is assigned to the sequence.
+\begin{equation}\label{eq:2}
+    s_i = \frac{\ e^{r_i} }{\sum_{j=1}^{N} \\ e^{r_i}}
+\end{equation}
+
+Cross-entropy in itself is a point wise loss, (that is it can be computed per individual item) as it is the sum of independent losses defined over the coordinates. Combining it with soft max introduces
+list wise properties into the loss, since the loss now cannot be separated over coordinates (or items). Putting them together we get the following loss function over the scores (assuming that the target
+item is indexed by $i$):
+
+\begin{equation}\label{eq:3}
+    L_{xe} = - \log s_i = \frac{\ e^{r_i} }{\sum_{j=1}^{N} \\ e^{r_i}}
+\end{equation}
+
+\textbf{Fixing the instability:} One of the losses available in GRU4Rec was cross-entropy with soft max scores. \cite{hidasi2016a} reported slightly better results than with other losses, but deemed the loss to be unstable for a large fraction of the hyper parameter space and thus advised against its use. This instability comes from the limited numerical precision. Assuming that there is a $k$ for which $r_k \gg  r_i , s_i$ becomes very small and rounded to 0, because of the limited precision. The loss
+then computes $log \ 0$, which is undefined. Two ways to circumvent this problem are as follow: (a)
+compute $− log(s_i +\epsilon)$, where $\epsilon$ is a very small value (we use $10^−24$ ); (b) compute $− log s_i$ directly as $−r _+log \sum_{j=1}^{N} e^{ r^j }. $The former introduces some noise, while the latter does not allow the separated use of the transformation and the loss, but both methods stabilize the loss. We did not observe any differences in the results of the two variants.
+
+\subsubsection{RANKING LOSSES : TOP1 & BPR}
+GRU4Rec offers two loss functions based on pairwise losses. Pairwise losses compare the score of the target to a negative example (i.e. any item other than the target). The loss is high if the target’s score is higher than that of the negative example. GRU4Rec computes scores for multiple negative samples per each target, and thus the loss function is composed as the average of the individual
+pairwise losses. This results in a list wise loss function, which is composed of pairwise losses.
+
+One of the loss functions is coined TOP1 (\ref{eq:4}). It is a heuristically put together loss consisting of two
+parts. The first part aims to push the target score above the score of the samples, while the second
+part lowers the score of negative samples towards zero. The latter acts as a regularizer, but instead
+of constraining the model weights directly, it penalizes high scores on the negative examples. Since
+all items act as a negative score in one training example or another, it generally pushes the scores
+down.
+
+\begin{equation}\label{eq:4}
+    L_{top1} =  \frac{1}{N_s}  \sum_{j=1}^{N_s} \alpha (r_j - r_i) + \alpha (r^{2}_{j})
+\end{equation}
+
+$j$ runs over the ($N_S$ ) sampled negative (’non-relevant’) items, relevant items are index by i. The other loss function (\ref{eq:5}) is based on the popular Bayesian Personalized Ranking (BPR) \cite{rendle2012bpr} loss. Here the negative log-probability of the target score exceeding the sample scores is minimized (i.e. the probability of target scores being above sample scores is maximized). The non-continuous $P (r_i > r_j )$ is approximated by $\alpha(r_i − r_j ).$
+
+\begin{equation}\label{eq:5}
+    L_{top1} =  \frac{1}{N_s}  \sum_{j=1}^{N_s} \log \alpha(r_i - r_j)
+\end{equation}
+
+
+\subsubsection{VANISHING GRADIENTS}
+Taking the average of individual pairwise losses has an undesired side effect. Examining the gradients for the TOP1 and BPR losses w.r.t. the target score $r_i$, ((6) and (7) respectively) reveals that
+under certain circumstances gradients vanish and thus learning stops. With pairwise losses, one
+generally wants to have negative samples with high scores, as those samples produce high gradients.
+Or intuitively, if the score of the negative sample is already well below that of the target, there is
+nothing to learn from that negative sample anymore. For this discussion we will denote samples
+where $rj \gg ri$
+irrelevant. For an irrelevant sample $\alpha(r_j − r_i)$ in ((6) and $1 − \alpha(r_i − r_j )$ (7) will be close to zero. Therefore, any irrelevant sample adds basically nothing to the total gradient.
+Meanwhile the gradient is always discounted by the total number of negative samples. By increasing the number of samples, the number of irrelevant samples increases faster than that of including
+relevant samples, since the majority of items is irrelevant as a negative sample. This is especially
+true for non-popularity-based sampling and high sample numbers. Therefore these losses start to
+vanish as the number of samples increase, which is counter intuitive and hurts the full potential of
+the algorithm.\footnote[5]{Simply removing the discounting factor does not solve this problem, since it is equivalent of multiplying the learning rate by $N_S$. This would destabilize learning due to introducing high variance into the updates.}\footnote[6]{For BPR, there is the option of maximizing the sum of individual pairwise probabilities $\sum_{N_S}^{j=1}  P(r_i > r_j )$, \\
+i.e. minimizing $− \log \sum_{N_S}^{j=1} \ \alpha(r_i − r_j )$. However, this loss has even worse properties.
+}
+
+\begin{equation}\label{eq:6}
+    \frac{\partial L_{top^1}}{\partial r_i} = - \frac{1}{N_s} \sigma (r_j - r_i) (1 - \sigma (r_j - r_i))
+\end{equation}
+
+\begin{equation}\label{eq:7}
+    \frac{\partial L_{bpr}}{\partial r_i} = - \frac{1}{N_s} \sum_{j=1}^{N_S} (1 - \sigma (r_i - r_j)  )
+\end{equation}
+
+\graphicspath{{img/}}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=400]{p2}
+    \caption{Median negative gradients of BPR and BPR-max w.r.t. the target score against the rank of the target item. Left: only mini batch samples are used (mini batch size: 32); Center: 2048 additional negative samples were added to the mini batch samples; Right: same setting as the center, focusing on ranks 0-200.}
+    \label{fig:galaxy}
+\end{figure}
+
+\subsection{ RANKING-MAX LOSS FUNCTION FAMILY}
+To overcome the vanishing of gradients as the number of samples increase, we propose a new family of listwise loss functions, based on individual pairwise losses. The idea is to have the target score compared with the most relevant sample score, which is the maximal score amongst the samples.
+
+\begin{equation}\label{eq:8}
+    L_{pairwise-max}\left ( r_i,\begin{Bmatrix}
+r_i
+\end{Bmatrix}_{j=1}^{N_S} \right ) = L_[pairwise]\left ( r_i,  \underset{j}{max} \ r_i\right )
+\end{equation}
+The maximum selection is non-differentiable and thus cannot be used with gradient descent. Therefore we use the softmax scores to preserve differentiability. Here, the soft max transformation is
+only used on the negative examples (i.e. $r_i$ is excluded), since we are looking from the maximum score amongst the negative examples. This naturally results in loss functions where each negative sample is taken into account proportional to its likelihood of having the maximal score. Based on this general idea, we now derive the TOP1-max and BPR-max loss functions.
+
+\textbf{TOP1-max} : The TOP1-max loss is fairly straightforward. The regularizing part does not necessarily need to be only applied for the maximal negative score, however we found that this gave the
+best results, thus kept it this way. The continuous approximation to the maximum selection entails
+summing over the individual losses weighted by the corresponding softmax scores sj , giving us the
+TOP1-max loss (\ref{eq:9}).
+
+\ref{eq:9}.
+
+\begin{equation}\label{eq:9}
+    L_{top1 - max}\left ( r_i,\begin{Bmatrix}
+r_i
+\end{Bmatrix}_{j=1}^{N_S} \right )= \sum_{j=1}^{N_S} s_j \left ( \sigma (r_j - r_i) + \sigma (r^2_j) \right )
+\end{equation}
+
+
+The gradient of TOP1-max (\ref{eq:10}) is the sof tmax weighted average \footnote[7]{$\sum s_j = 1$} of individual pairwise gradients.
+If $r_j$ is much lower than the maximum of negative scores, its weight will be almost zero and more
+weight will be placed on examples with scores close to the maximum. This solves the issue of
+vanishing gradients with more samples, because irrelevant samples will be just ignored, while the
+gradient will point towards the gradient of the relevant samples. Of course, if all samples are irrelevant, the gradient becomes near zero, but this is not a problem, since if the target score is greater
+than all sample scores, there is nothing to be learned. Unfortunately, the sensitivity to large sample
+scores of TOP1 is still an issue as it is the consequence of the pairwise loss and not the aggregation
+
+
+\begin{equation}\label{eq:10}
+  \frac{\partial L_{top^1 - max}}{\partial r_i} = \sum_{j=1}^{N_S} s_j\sigma(r_j - r_i)(1 - \sigma(r_j - r_i))
+  \end{equation}
+
+
+
+\textbf{BPR-max:} Going back to the probability interpretation of BPR, the goal is to maximize the probability of the target score being higher than the maximal sample score $r_max = max_j r_j$ . This can be
+rewritten using conditional probabilities:
+
+\begin{equation}\label{eq:11}
+  p\left ( r_i  > r_{max} \right ) = \sum_{j=1}^{N_S} P\left ( r_i > r_j | r_j = r_{max} \right ) P (r_j = r_{max})
+  \end{equation}
+
+
+
+$P(r_i > r_j )$ and $P(r_j = r_{max})$ is approximated by $\sigma(r_i − r_j )$ (as in the original BPR loss) and the
+softmax score $s_j$ respectively. We then want to minimize the negative log-probability, which gives
+us the loss
+
+\begin{equation}\label{eq:12}
+  L_{bpr-max} = \log \sum_{j=1}^{N_S} s_j \sigma (r_i - r_j)
+  \end{equation}
+
+
+The gradient of BPR-max (\ref{eq:13}) is the weighted average of individual BPR gradients, where the
+weights are $s_j \sigma (r_i − r_j)$. The relative importance of negative samples $j$ and $k$ is 
+$\frac{\sigma(ri−rj )s_j} {\sigma(r_i−r_k)s_k} = \frac{e^r_j + e^{-r_i+rj+r_k}}{e^rk + e^{-r_i+r_j+r_k}} $
+, which behaves like softmax weights if $ri \gg rj + rk$ or if both ri and rk are small.
+Otherwise it is a smoothed softmax. This means that while $r_i$is small, the weights are distributed
+more evenly, yet clear emphasis will be given to higher sample scores. As $r_i$ becomes higher, the
+focus shifts quickly to the samples with high scores. This is an ideal behaviour
+
+\begin{equation}\label{eq:13}
+  \frac{\partial L_{bpr-max}} {\partial r_i} = - \frac{\sum_{j=1}^{N_S} s_j \sigma(r_i - r_j)(1-\sigma (r_i - r_j))} {\sum_{j=1}^{N_S} s_j \sigma (r_i - r_j)}
+\end{equation}
+
+The gradient w.r.t. a negative sample – with both the BPR-max and TOP1-max – is proportional to the softmax score of the example, meaning that only the items, near the maximum will be updated. This is beneficial, because if the score of a negative sample is low, it doesn’t need to be updated. If the score of a sample is much higher than that of the others it will be the only one updated and the gradient will coincide with the gradient of the pairwise loss between the target and the sample score. In a more balanced setting the gradient is between the aforementioned gradient and 0. For example the gradient of BPR-max w.r.t. a negative sample’s score is as follows:
+
+
+\begin{equation}\label{eq:14}
+  \frac{\partial L_{bpr-max}} {\partial r_k} = S_K - \frac{S_K \alpha^2 (r_i - r_K)} {\sum_{j=1}^{N_S} s_j \sigma (r_i - r_j)}
+\end{equation}
+
+Figure 2 depicts how the gradients of BPR and BPR-max behave given the rank of the target item \footnote[8]{Similar trends can be observed when comparing TOP1 and TOP1-max, even though the shape of the curves
+is quite different from that of BPR.}.
+The rank of the target is the number of negative scores exceeding it, e.g. rank 0 means that the target score is higher than all sample scores. Lower rank means that there are fewer negative samples that are relevant. The figure depicts the median negative gradient w.r.t. the target score in two cases, measured on a dataset sample during the $1^st$ and $10^th$ epochs (i.e. beginning and end of the training): (left) no additional samples were used, only the other examples from a mini-batch of size 32; (middle & right) 2048 additional negative samples were added. The rightmost figure focuses on the first 200 ranks of the figure in the middle. The gradient is slightly higher for BPR when there are more relevant samples (i.e. high ranks). This is natural, since BPR-max focuses on samples closest to the maximum value and ignores other still relevant samples. This entails slightly slower learning for BPR-max when the target item is ranked at the end of the list, but the difference is not really significant. On the other hand, the gradient of BPR quickly vanishes as the number of relevant samples decrease (i.e. low ranks). The point of vanishing is relative to the total sample size. With small sample size, BPR’s gradient starts vanishing around rank 5 (the BPR-max does not vanish until rank 0); meanwhile, with more samples, the BPR gradient is very low, even for rank 100-500 (again, the gradient BPR-max starts decreasing significantly later). This means that BPR can hardly push target scores up in the ranking after a certain point, which comes earlier as the number of sample size increases. BPR-max, on the other hand, behaves well and is able to improve the score all the way.
+
+\subsubsection{ BPR-MAX WITH SCORE REGULARIZATION}
+
+Even though we showed that the heuristic TOP1 loss is sensitive to relevant samples with very high scores, it was found to be performing better than BPR in \cite{hidasi2016a}. According to our observation, the same is true for the relation of TOP1-max and BPR-max. Part of the reasons lies in the rare occurrence of $r_j \gg r_i$ while $r_j ≈ 0$ simultaneously. If only the first condition is met, the gradient w.r.t. $r_i$ might vanish, but the regularizing part of TOP1 makes sure that $r_j$ is moved towards zero, which might even make the update possible for $r_i$ next time (e.g. if $r_j$ was negative, moving it towards zero decreases the difference with ri). The score regularization in TOP1 is very beneficial to the overall learning process, so even though the loss might not be theoretically optimal,it can achieve good results. GRU4Rec support two forms of regularization with every loss: dropout and $l_2$ regularization of the model parameters. The regularization of TOP1 is used on the top of these. According to our experiments, the $2$ regularization of model parameters decreases the model performance. Our assumption is that some of the model weights – such as the weight matrices for computing the update and reset gate – should not be regularized. Penalizing high output scores takes care of constraining the model, even without explicitly regularizing the weights.
+
+
+Therefore we added score regularization to the BPR-max loss function as well. We tried several ways of score regularization. In the best performing one we conditioned the sample scores on
+independent, zero mean Gaussians with variance inversely proportional to the softmax score (\ref{eq:15}).This entails stronger regularization on scores closer to the maximum, which is ideal in our case.
+
+\begin{equation}\label{eq:15}
+P(r_i > r_{max}|\begin{Bmatrix}
+r_j
+\end{Bmatrix}_{j=1}^{N_S})\prod_{j=1}^{N_S} P(r_j) = P (r_i > r_{max}| \begin{Bmatrix}
+r_i
+\end{Bmatrix} ) \prod_{j=1}^{N_S} N (0, \frac{c}{s_J})
+\end{equation}
+
+
+
+We minimize the negative log-probability and do continuous approximations as before, resulting in the final form of the BPR-max loss function (\ref{eq:16}). The regularization term is a simple, softmax weighted $l2$ regularization over the scores. $\lambda$ is the regularization hyperparameter of the loss.
+
+\begin{equation}\label{eq:16}
+L_{bpr-max} = - \log \sum_{j=1}^{N_S} s_j \sigma ( r_i - r_j) + \lambda \sum_{j=1}^{N_S} s_jr^2_j
+\end{equation}
